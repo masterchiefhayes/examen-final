@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Productos</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<script src="app.js"></script>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+  <a class="navbar-brand" href="index.html">Inicio</a>
+  <a class="nav-link text-light" href="categorias.html">Categorías</a>
+  <a class="nav-link text-light" href="productos.html">Productos</a>
+  <a class="nav-link text-light" href="creditos.html">Créditos</a>
+</nav>
+
+<div class="container mt-4">
+
+  <h1 class="mb-4">Productos</h1>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4>Agregar producto</h4>
+      <form id="formProd">
+        <input class="form-control mb-2" placeholder="Nombre" id="nombreProd" required>
+        <input class="form-control mb-2" placeholder="Precio" id="precioProd" type="number" required>
+        <select class="form-control mb-2" id="catProd"></select>
+        <button class="btn btn-primary">Guardar</button>
+      </form>
+    </div>
+  </div>
+
+  <h3>Listado</h3>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Categoría</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tablaProd"></tbody>
+  </table>
+
+</div>
+
+<script>
+function cargarSelect(){
+  const sel = document.getElementById("catProd");
+  sel.innerHTML = "";
+  obtenerCategorias().forEach(cat=>{
+    sel.innerHTML += `<option value="${cat.id}">${cat.nombre}</option>`;
+  });
+}
+
+function crearFilaProducto(p, catNombre){
+  return `
+    <tr>
+      <td>${p.nombre}</td>
+      <td>Q ${p.precio}</td>
+      <td>${catNombre}</td>
+      <td>
+        <button class="btn btn-sm btn-primary" onclick="editarProdPrompt(${p.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarProd(${p.id})">Eliminar</button>
+      </td>
+    </tr>
+  `;
+}
+
+function cargarProductos(){
+  const tbody = document.getElementById("tablaProd");
+  const cats = obtenerCategorias();
+  const prods = obtenerProductos();
+  tbody.innerHTML = "";
+  prods.forEach(p=>{
+    const catObj = cats.find(c=>c.id == p.categoria);
+    const nombreCat = catObj ? catObj.nombre : "Sin categoría";
+    tbody.innerHTML += crearFilaProducto(p, nombreCat);
+  });
+}
+
+document.getElementById("formProd").addEventListener("submit", e=>{
+  e.preventDefault();
+  agregarProducto({
+    nombre: nombreProd.value.trim(),
+    precio: precioProd.value.trim(),
+    categoria: catProd.value
+  });
+  e.target.reset();
+  cargarProductos();
+});
+
+function editarProdPrompt(id){
+  const prods = obtenerProductos();
+  const p = prods.find(x=>x.id == id);
+  if(!p) return alert("Producto no encontrado");
+
+  const nuevoNombre = prompt("Nuevo nombre:", p.nombre);
+  if(nuevoNombre === null) return;
+
+  const nuevoPrecio = prompt("Nuevo precio:", p.precio);
+  if(nuevoPrecio === null) return;
+
+  const nuevaCat = prompt("Nueva categoría (ID):", p.categoria);
+  if(nuevaCat === null) return;
+
+  editarProducto(id, {
+    nombre: nuevoNombre.trim(),
+    precio: nuevoPrecio.trim(),
+    categoria: nuevaCat.trim()
+  });
+
+  cargarProductos();
+}
+
+function eliminarProd(id){
+  if(!confirm("¿Eliminar producto?")) return;
+  let newData = obtenerProductos().filter(p=>p.id != id);
+  localStorage.setItem("productos", JSON.stringify(newData));
+  cargarProductos();
+}
+
+cargarSelect();
+cargarProductos();
+</script>
+
+</body>
+</html>
